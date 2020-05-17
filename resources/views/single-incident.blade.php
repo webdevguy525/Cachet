@@ -1,8 +1,8 @@
 @extends('layout.master')
 
-@section('title', $incident->name.' | '.$siteTitle)
+@section('title', array_get($incident->meta, 'seo.title', $incident->name).' | '.$siteTitle)
 
-@section('description', trans('cachet.meta.description.incident', ['name' => $incident->name, 'date' => $incident->occurred_at_formatted]))
+@section('description', array_get($incident->meta, 'seo.description', trans('cachet.meta.description.incident', ['name' => $incident->name, 'date' => $incident->occurred_at_formatted])))
 
 @section('bodyClass', 'no-padding')
 
@@ -46,7 +46,7 @@
                             <small>
                                 <span data-toggle="tooltip" title="
                                     {{ trans('cachet.incidents.posted_at', ['timestamp' => $update->created_at_formatted]) }}">
-                                    {{ trans('cachet.incidents.posted', ['timestamp' => $update->created_at_diff]) }}
+                                    {{ trans('cachet.incidents.posted', ['timestamp' => $update->created_at_diff,'username' => $update->user->username]) }}
                                 </span>
                             </small>
                         </div>

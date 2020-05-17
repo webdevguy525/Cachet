@@ -25,7 +25,7 @@
                     <fieldset>
                         @if($incidentTemplates->count() > 0)
                         <div class="form-group">
-                            <label for="incident-template">{{ trans('forms.incidents.templates.template') }}</label>
+                            <label for="template">{{ trans('forms.incidents.templates.template') }}</label>
                             <select class="form-control" name="template" v-model="template">
                                 <option selected></option>
                                 @foreach($incidentTemplates as $tpl)
@@ -83,12 +83,12 @@
                                 @foreach($componentsInGroups as $group)
                                 <optgroup label="{{ $group->name }}">
                                     @foreach($group->components as $component)
-                                    <option value="{{ $component->id }}">{{ $component->name }}</option>
+                                    <option value="{{ $component->id }}">{!! $component->name !!}</option>
                                     @endforeach
                                 </optgroup>
                                 @endforeach
                                 @foreach($componentsOutGroups as $component)
-                                <option value="{{ $component->id }}">{{ $component->name }}</option>
+                                <option value="{{ $component->id }}">{!! $component->name !!}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -129,6 +129,14 @@
                             </label>
                         </div>
                         @endif
+                        <div class="form-group">
+                            <label>{{ trans('forms.seo.title') }}</label> <small class="text-muted">{{ trans('forms.optional') }}</small>
+                            <input type="text" name="seo[title]" class="form-control" placeholder="{{ trans('forms.optional') }}">
+                        </div>
+                        <div class="form-group">
+                            <label>{{ trans('forms.seo.description') }}</label> <small class="text-muted">{{ trans('forms.optional') }}</small>
+                            <input type="text" name="seo[description]" class="form-control" placeholder="{{ trans('forms.optional') }}">
+                        </div>
                     </fieldset>
 
                     <div class="form-group">

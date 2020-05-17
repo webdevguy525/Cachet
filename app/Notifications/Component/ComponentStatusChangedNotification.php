@@ -92,7 +92,7 @@ class ComponentStatusChangedNotification extends Notification
                 'unsubscribeUrl'         => cachet_route('subscribe.unsubscribe', $notifiable->verify_code),
                 'manageSubscriptionText' => trans('cachet.subscriber.manage_subscription'),
                 'manageSubscriptionUrl'  => cachet_route('subscribe.manage', $notifiable->verify_code),
-        ]);
+            ]);
     }
 
     /**
@@ -140,15 +140,15 @@ class ComponentStatusChangedNotification extends Notification
 
         return (new SlackMessage())
                     ->$status()
-                    ->content(trans('notifications.component.status_update.slack.subject'))
+                    ->content(trans('notifications.component.status_update.slack.title'))
                     ->attachment(function ($attachment) use ($content, $notifiable) {
                         $attachment->title($content, cachet_route('status-page'))
                                    ->fields(array_filter([
-                                        'Component'  => $this->component->name,
-                                        'Old Status' => $this->component->human_status,
-                                        'New Status' => trans("cachet.components.status.{$this->status}"),
-                                        'Link'       => $this->component->link,
-                                    ]))
+                                       'Component'  => $this->component->name,
+                                       'Old Status' => $this->component->human_status,
+                                       'New Status' => trans("cachet.components.status.{$this->status}"),
+                                       'Link'       => $this->component->link,
+                                   ]))
                                    ->footer(trans('cachet.subscriber.unsubscribe', ['link' => cachet_route('subscribe.unsubscribe', $notifiable->verify_code)]));
                     });
     }

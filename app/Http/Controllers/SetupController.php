@@ -16,6 +16,7 @@ use CachetHQ\Cachet\Models\User;
 use CachetHQ\Cachet\Settings\Repository;
 use GrahamCampbell\Binput\Facades\Binput;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Request;
@@ -133,17 +134,20 @@ class SetupController extends Controller
      */
     public function getIndex()
     {
-        $supportedLanguages = Request::getLanguages();
+        $requestedLanguages = Request::getLanguages();
         $userLanguage = Config::get('app.locale');
+        $langs = Config::get('langs');
 
-        foreach ($supportedLanguages as $language) {
+        foreach ($requestedLanguages as $language) {
             $language = str_replace('_', '-', $language);
 
-            if (isset($this->langs[$language])) {
+            if (isset($langs[$language])) {
                 $userLanguage = $language;
                 break;
             }
         }
+
+        app('translator')->setLocale($userLanguage);
 
         // Since .env may already be configured, we should show that data!
         $cacheConfig = [
@@ -199,7 +203,7 @@ class SetupController extends Controller
         });
 
         $v->sometimes(['env.mail_username'], 'required', function ($input) {
-            return !in_array($input->env['mail_username'], ['sendmail']);
+            return !in_array($input->env['mail_driver'], ['sendmail', 'log']);
         });
 
         if ($v->passes()) {
@@ -240,7 +244,7 @@ class SetupController extends Controller
 
         if ($v->passes()) {
             // Pull the user details out.
-            $userDetails = array_pull($postData, 'user');
+            $userDetails = Arr::pull($postData, 'user');
 
             $user = User::create([
                 'username' => $userDetails['username'],
@@ -253,13 +257,13 @@ class SetupController extends Controller
 
             $setting = app(Repository::class);
 
-            $settings = array_pull($postData, 'settings');
+            $settings = Arr::pull($postData, 'settings');
 
             foreach ($settings as $settingName => $settingValue) {
                 $setting->set($settingName, $settingValue);
             }
 
-            $envData = array_pull($postData, 'env');
+            $envData = Arr::pull($postData, 'env');
 
             // Write the env to the .env file.
             execute(new UpdateConfigCommand($envData));

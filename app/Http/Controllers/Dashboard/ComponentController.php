@@ -15,13 +15,10 @@ use AltThree\Validator\ValidationException;
 use CachetHQ\Cachet\Bus\Commands\Component\CreateComponentCommand;
 use CachetHQ\Cachet\Bus\Commands\Component\RemoveComponentCommand;
 use CachetHQ\Cachet\Bus\Commands\Component\UpdateComponentCommand;
-use CachetHQ\Cachet\Bus\Commands\Tag\ApplyTagCommand;
-use CachetHQ\Cachet\Bus\Commands\Tag\CreateTagCommand;
 use CachetHQ\Cachet\Models\Component;
 use CachetHQ\Cachet\Models\ComponentGroup;
 use GrahamCampbell\Binput\Facades\Binput;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\View;
 
 /**
@@ -73,7 +70,7 @@ class ComponentController extends Controller
      */
     public function showComponents()
     {
-        $components = Component::orderBy('order')->orderBy('created_at')->get();
+        $components = Component::with('group')->orderBy('order')->orderBy('created_at')->get();
 
         $this->subMenu['components']['active'] = true;
 
@@ -112,7 +109,6 @@ class ComponentController extends Controller
     public function updateComponentAction(Component $component)
     {
         $componentData = Binput::get('component');
-        $tags = array_pull($componentData, 'tags');
 
         try {
             $component = execute(new UpdateComponentCommand(
@@ -125,6 +121,7 @@ class ComponentController extends Controller
                 $componentData['group_id'],
                 $componentData['enabled'],
                 null, // Meta data cannot be supplied through the dashboard yet.
+                $componentData['tags'], // Meta data cannot be supplied through the dashboard yet.
                 true // Silent since we're not really making changes to the component (this should be optional)
             ));
         } catch (ValidationException $e) {
@@ -133,17 +130,6 @@ class ComponentController extends Controller
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.components.edit.failure')))
                 ->withErrors($e->getMessageBag());
         }
-
-        $component->tags()->delete();
-
-        // The component was added successfully, so now let's deal with the tags.
-        Collection::make(preg_split('/ ?, ?/', $tags))->map(function ($tag) {
-            return trim($tag);
-        })->map(function ($tag) {
-            return execute(new CreateTagCommand($tag));
-        })->each(function ($tag) use ($component) {
-            execute(new ApplyTagCommand($component, $tag));
-        });
 
         return cachet_redirect('dashboard.components.edit', [$component->id])
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.components.edit.success')));
@@ -169,7 +155,6 @@ class ComponentController extends Controller
     public function createComponentAction()
     {
         $componentData = Binput::get('component');
-        $tags = array_pull($componentData, 'tags');
 
         try {
             $component = execute(new CreateComponentCommand(
@@ -180,7 +165,8 @@ class ComponentController extends Controller
                 $componentData['order'],
                 $componentData['group_id'],
                 $componentData['enabled'],
-                null // Meta data cannot be supplied through the dashboard yet.
+                null, // Meta data cannot be supplied through the dashboard yet.
+                $componentData['tags']
             ));
         } catch (ValidationException $e) {
             return cachet_redirect('dashboard.components.create')
@@ -188,15 +174,6 @@ class ComponentController extends Controller
                 ->withTitle(sprintf('%s %s', trans('dashboard.notifications.whoops'), trans('dashboard.components.add.failure')))
                 ->withErrors($e->getMessageBag());
         }
-
-        // The component was added successfully, so now let's deal with the tags.
-        Collection::make(preg_split('/ ?, ?/', $tags))->map(function ($tag) {
-            return trim($tag);
-        })->map(function ($tag) {
-            return execute(new CreateTagCommand($tag));
-        })->each(function ($tag) use ($component) {
-            execute(new ApplyTagCommand($component, $tag));
-        });
 
         return cachet_redirect('dashboard.components')
             ->withSuccess(sprintf('%s %s', trans('dashboard.notifications.awesome'), trans('dashboard.components.add.success')));
